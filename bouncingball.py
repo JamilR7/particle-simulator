@@ -35,12 +35,18 @@ class Ball:
             self.pos[1] = height - self.radius  # Reset position to ground level
             self.velocity = -self.velocity * self.restitution
 
+        if self.pos[0] > width - self.radius:
+            self.pos[0] = width - self.radius
+        elif self.pos[0] < 0 + self.radius:
+            self.pos[0] = 0 + self.radius
+
+
 num_of_balls = 2
 balls = []
 
 for ball in range(num_of_balls):
-    color = random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
-    radius = 20
+    color = 0, 0, random.randint(0, 255)
+    radius = 5
     pos = random.randint(0, width - radius), random.randint(0, height - radius)
     balls.append(Ball(color, pos, radius))
 
@@ -56,6 +62,8 @@ for ball in range(num_of_balls):
                 if not ((abs(current_ball.pos[0] - next_ball.pos[0]) >= current_ball.radius + next_ball.radius) or \
                         (abs(current_ball.pos[1] - next_ball.pos[1]) >= current_ball.radius + next_ball.radius)):
                     print("COLLISION")
+                    # current_ball.velocity X = next_ball.velocity X
+                    current_ball.velocity = -current_ball.velocity
 
 run = True
 while run:
