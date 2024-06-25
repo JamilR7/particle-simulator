@@ -52,12 +52,12 @@ class Ball:
             self.velocity[1] = -self.velocity[1]
 
 
-num_of_balls = 2
+num_of_balls = 10
 balls = []
 
 for ball in range(num_of_balls):
     color = random.randint(20, 255), 0, random.randint(20, 255)
-    radius = 50
+    radius = 10
     pos = random.randint(0, width - radius), random.randint(0, height - radius)
     balls.append(Ball(color, pos, radius))
 
@@ -66,10 +66,8 @@ def CollisionDetection(balls):
     for i in range(len(balls)):
         current_ball = balls[i]
 
-        if i + 1 < len(balls):
-            next_ball = balls[i + 1]
-            #            print("next", next_ball.pos)  # Ensure this prints the correct next ball position
-            #            print("current", current_ball.pos)  # Ensure this prints the correct current ball position
+        for j in range(i + 1, len(balls)):
+            next_ball = balls[j]
 
             dx = next_ball.pos[0] - current_ball.pos[0]
             dy = next_ball.pos[1] - current_ball.pos[1]
@@ -140,7 +138,7 @@ def multiply_vector_by_scalar(scalar, vec):
 
 run = True
 while run:
-    dt = clock.tick(30) / 1000.0
+    dt = clock.tick(60) / 1000.0
     screen.fill((0, 0, 0))
 
     for ball in balls:
