@@ -1,3 +1,5 @@
+import math
+
 import pygame
 import random
 
@@ -8,6 +10,7 @@ screen = pygame.display.set_mode((width, height))
 
 clock = pygame.time.Clock()
 
+
 class Ball:
     def __init__(self, color, pos, radius):
         self.color = color
@@ -16,6 +19,7 @@ class Ball:
         self.velocity = [random.randint(50, 100), 0]
         self.activate = False
         self.restitution = 1
+        self.mass = 1
 
     def move(self, dt):
         self.pos[0] += self.velocity[0] * dt  # Update position based on velocity
@@ -47,14 +51,16 @@ class Ball:
             self.pos[1] = 0 + self.radius
             self.velocity[1] = -self.velocity[1]
 
-num_of_balls = 100
+
+num_of_balls = 2
 balls = []
 
 for ball in range(num_of_balls):
     color = random.randint(20, 255), 0, random.randint(20, 255)
-    radius = 1
+    radius = 50
     pos = random.randint(0, width - radius), random.randint(0, height - radius)
     balls.append(Ball(color, pos, radius))
+
 
 def CollisionDetection(balls):
     for i in range(len(balls)):
@@ -62,12 +68,75 @@ def CollisionDetection(balls):
 
         if i + 1 < len(balls):
             next_ball = balls[i + 1]
-#            print("next", next_ball.pos)  # Ensure this prints the correct next ball position
-#            print("current", current_ball.pos)  # Ensure this prints the correct current ball position
+            #            print("next", next_ball.pos)  # Ensure this prints the correct next ball position
+            #            print("current", current_ball.pos)  # Ensure this prints the correct current ball position
 
-            if not ((abs(current_ball.pos[0] - next_ball.pos[0]) >= current_ball.radius + next_ball.radius) or \
-                    (abs(current_ball.pos[1] - next_ball.pos[1]) >= current_ball.radius + next_ball.radius)):
-                print("COLLISION")
+            dx = next_ball.pos[0] - current_ball.pos[0]
+            dy = next_ball.pos[1] - current_ball.pos[1]
+            distance = math.sqrt(dx ** 2 + dy ** 2)
+
+            if distance <= current_ball.radius + next_ball.radius:
+                print("collision")
+
+                normal_vector = [next_ball.velocity[0] - current_ball.velocity[0],
+                                 next_ball.velocity[1] - current_ball.velocity[1]]
+                normal_vector_magnitude = math.sqrt(normal_vector[0] ** 2 + normal_vector[1] ** 2)
+
+                unit_normal_vector = [(normal_vector[0] / normal_vector_magnitude),
+                                      (normal_vector[1] / normal_vector_magnitude)]
+                unit_tangent_vector = [-(normal_vector[1] / normal_vector_magnitude),
+                                       (normal_vector[0] / normal_vector_magnitude)]
+
+                # let v1 = ball 1 velocity, v2 = ball 2 velocity, n = normal, t = tangent
+                # scalar projection = unit vector b * vector a
+
+                scalar_projection_v1n = dot_product(current_ball.velocity, unit_normal_vector)
+                scalar_projection_v1t = dot_product(current_ball.velocity, unit_tangent_vector)
+                scalar_projection_v2n = dot_product(next_ball.velocity, unit_normal_vector)
+                scalar_projection_v2t = dot_product(next_ball.velocity, unit_tangent_vector)
+
+                # final tangential velocity does not change as the impulse is normal to the surface
+
+                scalar_final_normal_v1 = (scalar_projection_v1n * (current_ball.mass - next_ball.mass)
+                                          + 2 * next_ball.mass * scalar_projection_v2n) / (
+                                                     current_ball.mass + next_ball.mass)
+
+                scalar_final_normal_v2 = (scalar_projection_v2n * (next_ball.mass - current_ball.mass)
+                                          + 2 * current_ball.mass * scalar_projection_v1n) / (
+                                                     current_ball.mass + next_ball.mass)
+
+                final_normal_vector_v1 = multiply_vector_by_scalar(scalar_final_normal_v1, unit_normal_vector)
+                final_tangent_vector_v1 = multiply_vector_by_scalar(scalar_projection_v1t, unit_tangent_vector)
+                final_normal_vector_v2 = multiply_vector_by_scalar(scalar_final_normal_v2, unit_normal_vector)
+                final_tangent_vector_v2 = multiply_vector_by_scalar(scalar_projection_v2t, unit_tangent_vector)
+
+                final_v1_vector = add_vectors(final_normal_vector_v1, final_tangent_vector_v1)
+                final_v2_vector = add_vectors(final_normal_vector_v2, final_tangent_vector_v2)
+
+                current_ball.velocity = final_v1_vector
+                next_ball.velocity = final_v2_vector
+
+
+def dot_product(vec1, vec2):
+    result = 0
+    for i in range(len(vec1)):
+        result += vec1[i] * vec2[i]
+    return result
+
+
+def add_vectors(vec1, vec2):
+    result = []
+    for i in range(len(vec1)):
+        result.append(vec1[i] + vec2[i])
+    return result
+
+
+def multiply_vector_by_scalar(scalar, vec):
+    result = [0, 0]
+    for i in range(len(vec)):
+        result[i] = vec[i] * scalar
+    return result
+
 
 run = True
 while run:
@@ -98,4 +167,3 @@ while run:
 
     pygame.display.update()
 pygame.quit()
-
