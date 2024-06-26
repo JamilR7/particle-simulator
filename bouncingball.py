@@ -14,6 +14,8 @@ clock = pygame.time.Clock()
 class Ball:
     def __init__(self, color, pos, radius):
         self.color = color
+        self.glow_color = (255, 255, 0)
+        self.should_glow = False
         self.pos = list(pos)
         self.radius = radius
         self.velocity = [random.randint(50, 100), 0]
@@ -22,6 +24,8 @@ class Ball:
         self.mass = 1
         self.left = None
         self.right = None
+        self.glow_timer = 0
+        self.glow_limit = 1
 
     def update_left_right(self):
         self.left = self.pos[0] - self.radius
@@ -33,6 +37,14 @@ class Ball:
 
     def draw(self, surface):
         pygame.draw.circle(surface, self.color, self.pos, self.radius)
+        if self.should_glow:
+            pygame.draw.circle(surface, self.glow_color, self.pos, self.radius)
+
+    def track_glow_time(self, dt):
+        if self.should_glow:
+            self.glow_timer += dt
+            if self.glow_timer >= self.glow_limit:
+                self.should_glow = False
 
     def gravity(self, dt):
         acceleration = [0, 100]
@@ -59,7 +71,7 @@ class Ball:
             self.velocity[1] = -self.velocity[1]
 
 
-num_of_balls = 10
+num_of_balls = 5
 balls = []
 
 for ball in range(num_of_balls):
@@ -80,7 +92,8 @@ def collision_detection(balls):
             if next_ball.left > current_ball.right:
                 break
 
-            print(ball.left, ball.right)
+            current_ball.should_glow = True
+            next_ball.should_glow = True
 
             dx = next_ball.pos[0] - current_ball.pos[0]
             dy = next_ball.pos[1] - current_ball.pos[1]
@@ -110,11 +123,11 @@ def collision_detection(balls):
 
                 scalar_final_normal_v1 = (scalar_projection_v1n * (current_ball.mass - next_ball.mass)
                                           + 2 * next_ball.mass * scalar_projection_v2n) / (
-                                                     current_ball.mass + next_ball.mass)
+                                                 current_ball.mass + next_ball.mass)
 
                 scalar_final_normal_v2 = (scalar_projection_v2n * (next_ball.mass - current_ball.mass)
                                           + 2 * current_ball.mass * scalar_projection_v1n) / (
-                                                     current_ball.mass + next_ball.mass)
+                                                 current_ball.mass + next_ball.mass)
 
                 final_normal_vector_v1 = multiply_vector_by_scalar(scalar_final_normal_v1, unit_normal_vector)
                 final_tangent_vector_v1 = multiply_vector_by_scalar(scalar_projection_v1t, unit_tangent_vector)
@@ -158,6 +171,7 @@ while run:
         ball.draw(screen)
         ball.move(dt)
         ball.wall_collision_check(dt)
+        ball.track_glow_time(dt)
 
     collision_detection(balls)
 
