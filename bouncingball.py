@@ -5,7 +5,7 @@ import random
 
 pygame.init()
 
-width, height = 800, 800
+width, height = 700, 700
 screen = pygame.display.set_mode((width, height))
 
 clock = pygame.time.Clock()
@@ -20,9 +20,16 @@ class Ball:
         self.activate = False
         self.restitution = 1
         self.mass = 1
+        self.left = None
+        self.right = None
+
+    def update_left_right(self):
+        self.left = self.pos[0] - self.radius
+        self.right = self.pos[0] + self.radius
 
     def move(self, dt):
         self.pos[0] += self.velocity[0] * dt  # Update position based on velocity
+        self.update_left_right()
 
     def draw(self, surface):
         pygame.draw.circle(surface, self.color, self.pos, self.radius)
@@ -62,19 +69,25 @@ for ball in range(num_of_balls):
     balls.append(Ball(color, pos, radius))
 
 
-def CollisionDetection(balls):
+def collision_detection(balls):
+    balls.sort(key=lambda ball: ball.left)
     for i in range(len(balls)):
         current_ball = balls[i]
 
         for j in range(i + 1, len(balls)):
             next_ball = balls[j]
 
+            if next_ball.left > current_ball.right:
+                break
+
+            print(ball.left, ball.right)
+
             dx = next_ball.pos[0] - current_ball.pos[0]
             dy = next_ball.pos[1] - current_ball.pos[1]
             distance = math.sqrt(dx ** 2 + dy ** 2)
 
             if distance <= current_ball.radius + next_ball.radius:
-                print("collision")
+                print("COMPUTING YEAHAH")
 
                 normal_vector = [next_ball.velocity[0] - current_ball.velocity[0],
                                  next_ball.velocity[1] - current_ball.velocity[1]]
@@ -146,7 +159,7 @@ while run:
         ball.move(dt)
         ball.wall_collision_check(dt)
 
-    CollisionDetection(balls)
+    collision_detection(balls)
 
     key = pygame.key.get_pressed()
 
