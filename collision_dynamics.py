@@ -19,10 +19,11 @@ class Ball:
         self.should_glow = False
         self.pos = list(pos)
         self.radius = radius
-        self.velocity = [random.randint(50, 100), 0]
+        self.velocity = [0, 0]
         self.acceleration = [0, 100]
         self.activate = False
-        self.restitution = 1
+        self.activate2 = False
+        self.restitution = 0.9
         self.mass = 1
         self.left = None
         self.right = None
@@ -48,31 +49,34 @@ class Ball:
             if self.glow_timer >= self.glow_limit:
                 self.should_glow = False
 
-    def resultant_force(self, dt):
+    def resultant_force(self, force, dt):
 
         self.weight = [0, self.mass * self.acceleration[1]]
-        drag_coefficient = 0.1
+        drag_coefficient = 0.7
 
         drag_force_vector = [-drag_coefficient * self.velocity[0], -drag_coefficient * self.velocity[1]]
 
-        force = add_vectors(self.weight, drag_force_vector)
+        if self.activate and not self.activate2:
+            forces = add_vectors(self.weight, drag_force_vector)
+            return forces
+        elif self.activate2 and not self.activate:
+            forces = add_vectors(force, drag_force_vector)
+            return forces
+        elif self.activate and self.activate2:
+            return force
 
-        return force
+    def accelerate(self, force, dt):
 
-    def accelerate(self, dt):
-        force = self.resultant_force(dt)
-
+        resultant = self.resultant_force(force, dt)
         # change in velocity
-
-        delta_vx = (force[0] / self.mass) * dt
-        delta_vy = (force[1] / self.mass) * dt
+        delta_vx = (resultant[0] / self.mass) * dt
+        delta_vy = (resultant[1] / self.mass) * dt
 
         self.velocity[1] += delta_vy  # Update velocity
         self.pos[1] += self.velocity[1] * dt  # Update position based on velocity
 
         self.velocity[0] += delta_vx
         self.pos[0] += self.velocity[0] * dt
-
 
 
     def wall_collision_check(self, dt):
@@ -94,15 +98,36 @@ class Ball:
             self.velocity[1] = -self.velocity[1]
 
 
-num_of_balls = 3
+num_of_balls = 10
 balls = []
 
 for ball in range(num_of_balls):
     color = random.randint(20, 255), 0, random.randint(20, 255)
-    radius = 10
+    radius = 4
     pos = random.randint(0, width - radius), random.randint(0, height - radius)
     balls.append(Ball(color, pos, radius))
 
+
+def attraction(balls, dt):
+    attraction_constant = 0.5
+    for i in range(len(balls)):
+        current_ball = balls[i]
+        for j in range(i + 1, len(balls)):
+            next_ball = balls[j]
+
+            direction_vector = subtract_vectors(next_ball.pos, current_ball.pos)
+            distance = math.sqrt(direction_vector[0] ** 2 + direction_vector[1] ** 2)
+
+            if distance == 0:
+                continue  # Avoid division by zero
+
+            unit_direction_vector = [direction_vector[0] / distance, direction_vector[1] / distance]
+            attraction_magnitude = (attraction_constant * current_ball.mass * next_ball.mass)
+
+            attraction_vector = multiply_vector_by_scalar(attraction_magnitude, unit_direction_vector)
+
+            current_ball.accelerate(attraction_vector, dt)
+            next_ball.accelerate(multiply_vector_by_scalar(-1, attraction_vector), dt)
 
 def collision_detection(balls):
     balls.sort(key=lambda ball: ball.left)
@@ -123,11 +148,14 @@ def collision_detection(balls):
             distance = math.sqrt(dx ** 2 + dy ** 2)
 
             if distance <= current_ball.radius + next_ball.radius:
-                print("COLLISION")
+
 
                 normal_vector = [next_ball.velocity[0] - current_ball.velocity[0],
                                  next_ball.velocity[1] - current_ball.velocity[1]]
                 normal_vector_magnitude = math.sqrt(normal_vector[0] ** 2 + normal_vector[1] ** 2)
+
+                if normal_vector_magnitude == 0:
+                    continue
 
                 unit_normal_vector = [(normal_vector[0] / normal_vector_magnitude),
                                       (normal_vector[1] / normal_vector_magnitude)]
@@ -178,6 +206,13 @@ def add_vectors(vec1, vec2):
     return result
 
 
+def subtract_vectors(vec1, vec2):
+    result = []
+    for i in range(len(vec1)):
+        result.append(vec1[i] - vec2[i])
+    return result
+
+
 def multiply_vector_by_scalar(scalar, vec):
     result = [0, 0]
     for i in range(len(vec)):
@@ -205,9 +240,18 @@ while run:
             if not ball.activate:
                 ball.activate = True
 
+    if key[pygame.K_t]:
+        for ball in balls:
+            if not ball.activate2:
+                ball.activate2 = True
+
     for ball in balls:
-        if ball.activate:
-            ball.accelerate(dt)
+        if ball.activate and not ball.activate2:
+            ball.accelerate(None, dt)
+        elif ball.activate2 and not ball.activate:
+            attraction(balls, dt)
+        elif ball.activate and ball.activate2:
+            attraction(balls, dt)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
