@@ -13,12 +13,14 @@ clock = pygame.time.Clock()
 
 class Ball:
     def __init__(self, color, pos, radius):
+        self.weight = None
         self.color = color
         self.glow_color = (255, 255, 0)
         self.should_glow = False
         self.pos = list(pos)
         self.radius = radius
         self.velocity = [random.randint(50, 100), 0]
+        self.acceleration = [0, 100]
         self.activate = False
         self.restitution = 1
         self.mass = 1
@@ -46,11 +48,32 @@ class Ball:
             if self.glow_timer >= self.glow_limit:
                 self.should_glow = False
 
-    def gravity(self, dt):
-        acceleration = [0, 100]
+    def resultant_force(self, dt):
 
-        self.velocity[1] += acceleration[1] * dt  # Update velocity
+        self.weight = [0, self.mass * self.acceleration[1]]
+        drag_coefficient = 0.1
+
+        drag_force_vector = [-drag_coefficient * self.velocity[0], -drag_coefficient * self.velocity[1]]
+
+        force = add_vectors(self.weight, drag_force_vector)
+
+        return force
+
+    def accelerate(self, dt):
+        force = self.resultant_force(dt)
+
+        # change in velocity
+
+        delta_vx = (force[0] / self.mass) * dt
+        delta_vy = (force[1] / self.mass) * dt
+
+        self.velocity[1] += delta_vy  # Update velocity
         self.pos[1] += self.velocity[1] * dt  # Update position based on velocity
+
+        self.velocity[0] += delta_vx
+        self.pos[0] += self.velocity[0] * dt
+
+
 
     def wall_collision_check(self, dt):
         # Check if ball has hit the ground
@@ -71,7 +94,7 @@ class Ball:
             self.velocity[1] = -self.velocity[1]
 
 
-num_of_balls = 5
+num_of_balls = 3
 balls = []
 
 for ball in range(num_of_balls):
@@ -100,7 +123,7 @@ def collision_detection(balls):
             distance = math.sqrt(dx ** 2 + dy ** 2)
 
             if distance <= current_ball.radius + next_ball.radius:
-                print("COMPUTING YEAHAH")
+                print("COLLISION")
 
                 normal_vector = [next_ball.velocity[0] - current_ball.velocity[0],
                                  next_ball.velocity[1] - current_ball.velocity[1]]
@@ -184,7 +207,7 @@ while run:
 
     for ball in balls:
         if ball.activate:
-            ball.gravity(dt)
+            ball.accelerate(dt)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
