@@ -126,6 +126,8 @@ def attraction(balls, dt):
 
             attraction_vector = multiply_vector_by_scalar(attraction_magnitude, unit_direction_vector)
 
+            if distance <= current_ball.radius + next_ball.radius:
+                break
             current_ball.accelerate(attraction_vector, dt)
             next_ball.accelerate(multiply_vector_by_scalar(-1, attraction_vector), dt)
 
