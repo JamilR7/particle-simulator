@@ -111,6 +111,9 @@ for ball in range(num_of_balls):
 def attraction(balls, dt):
     attraction_constant = 100000
     repulsive_constant = attraction_constant * 2
+    for ball in balls:
+        ball.velocity = [0, 0]
+
     for i in range(len(balls)):
         current_ball = balls[i]
         for j in range(i + 1, len(balls)):
