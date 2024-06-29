@@ -19,7 +19,7 @@ class Ball:
         self.should_glow = False
         self.pos = list(pos)
         self.radius = radius
-        self.velocity = [0, 0]
+        self.velocity = [random.randint(-100, 100), random.randint(-100, 100)]
         self.acceleration = [0, 100]
         self.activate = False
         self.activate2 = False
@@ -63,7 +63,8 @@ class Ball:
             forces = add_vectors(force, drag_force_vector)
             return forces
         elif self.activate and self.activate2:
-            return force
+            drag_and_force = add_vectors(drag_force_vector, force)
+            return add_vectors(drag_and_force, multiply_vector_by_scalar(1/900, self.weight))
 
     def accelerate(self, force, dt):
 
@@ -77,7 +78,6 @@ class Ball:
 
         self.velocity[0] += delta_vx
         self.pos[0] += self.velocity[0] * dt
-
 
     def wall_collision_check(self, dt):
         # Check if ball has hit the ground
@@ -103,13 +103,14 @@ balls = []
 
 for ball in range(num_of_balls):
     color = random.randint(20, 255), 0, random.randint(20, 255)
-    radius = 4
+    radius = 10
     pos = random.randint(0, width - radius), random.randint(0, height - radius)
     balls.append(Ball(color, pos, radius))
 
 
 def attraction(balls, dt):
-    attraction_constant = 0.5
+    attraction_constant = 100000
+    repulsive_constant = attraction_constant * 2
     for i in range(len(balls)):
         current_ball = balls[i]
         for j in range(i + 1, len(balls)):
@@ -122,14 +123,19 @@ def attraction(balls, dt):
                 continue  # Avoid division by zero
 
             unit_direction_vector = [direction_vector[0] / distance, direction_vector[1] / distance]
-            attraction_magnitude = (attraction_constant * current_ball.mass * next_ball.mass)
+            attraction_magnitude = (attraction_constant * current_ball.mass * next_ball.mass) / distance ** 2
 
             attraction_vector = multiply_vector_by_scalar(attraction_magnitude, unit_direction_vector)
 
-            if distance <= current_ball.radius + next_ball.radius:
-                break
-            current_ball.accelerate(attraction_vector, dt)
-            next_ball.accelerate(multiply_vector_by_scalar(-1, attraction_vector), dt)
+            if distance <= (current_ball.radius + next_ball.radius) + 5:
+                repulsion_magnitude = repulsive_constant / distance ** 2
+                repulsion_vector = multiply_vector_by_scalar(repulsion_magnitude, unit_direction_vector)
+                current_ball.accelerate(multiply_vector_by_scalar(-1, repulsion_vector), dt)
+                next_ball.accelerate(repulsion_vector, dt)
+            else:
+                current_ball.accelerate(attraction_vector, dt)
+                next_ball.accelerate(multiply_vector_by_scalar(-1, attraction_vector), dt)
+
 
 def collision_detection(balls):
     balls.sort(key=lambda ball: ball.left)
@@ -150,7 +156,6 @@ def collision_detection(balls):
             distance = math.sqrt(dx ** 2 + dy ** 2)
 
             if distance <= current_ball.radius + next_ball.radius:
-
 
                 normal_vector = [next_ball.velocity[0] - current_ball.velocity[0],
                                  next_ball.velocity[1] - current_ball.velocity[1]]
@@ -232,6 +237,7 @@ while run:
         ball.move(dt)
         ball.wall_collision_check(dt)
         ball.track_glow_time(dt)
+
 
     collision_detection(balls)
 
