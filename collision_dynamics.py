@@ -1,5 +1,4 @@
 import math
-
 import pygame
 import random
 
@@ -21,8 +20,8 @@ class Ball:
         self.radius = radius
         self.velocity = [random.randint(-100, 100), random.randint(-100, 100)]
         self.acceleration = [0, 100]
-        self.activate = False
-        self.activate2 = False
+        self.gravity_on = False
+        self.attract_on = False
         self.restitution = 0.9
         self.mass = 1
         self.left = None
@@ -56,13 +55,13 @@ class Ball:
 
         drag_force_vector = [-drag_coefficient * self.velocity[0], -drag_coefficient * self.velocity[1]]
 
-        if self.activate and not self.activate2:
+        if self.gravity_on and not self.attract_on:
             forces = add_vectors(self.weight, drag_force_vector)
             return forces
-        elif self.activate2 and not self.activate:
+        elif self.attract_on and not self.gravity_on:
             forces = add_vectors(force, drag_force_vector)
             return forces
-        elif self.activate and self.activate2:
+        elif self.gravity_on and self.attract_on:
             drag_and_force = add_vectors(drag_force_vector, force)
             return add_vectors(drag_and_force, multiply_vector_by_scalar(1/900, self.weight))
 
@@ -98,7 +97,7 @@ class Ball:
             self.velocity[1] = -self.velocity[1]
 
 
-num_of_balls = 10
+num_of_balls = 20
 balls = []
 
 for ball in range(num_of_balls):
@@ -109,7 +108,11 @@ for ball in range(num_of_balls):
 
 
 def attraction(balls, dt):
-    attraction_constant = 100000
+    attraction_constant = (1.3477 * math.pow(10, 8)) * math.pow(num_of_balls, -3.1293) - 300
+    # power law equation that fits the relationship between number of balls and the attraction constant
+    # becomes too computationally expensive beyond 50 balls
+
+    print(attraction_constant)
     repulsive_constant = attraction_constant * 2
     for ball in balls:
         ball.velocity = [0, 0]
@@ -248,20 +251,20 @@ while run:
 
     if key[pygame.K_f]:
         for ball in balls:
-            if not ball.activate:
-                ball.activate = True
+            if not ball.gravity_on:
+                ball.gravity_on = True
 
     if key[pygame.K_t]:
         for ball in balls:
-            if not ball.activate2:
-                ball.activate2 = True
+            if not ball.attract_on:
+                ball.attract_on = True
 
     for ball in balls:
-        if ball.activate and not ball.activate2:
+        if ball.gravity_on and not ball.attract_on:
             ball.accelerate(None, dt)
-        elif ball.activate2 and not ball.activate:
+        elif ball.attract_on and not ball.gravity_on:
             attraction(balls, dt)
-        elif ball.activate and ball.activate2:
+        elif ball.gravity_on and ball.attract_on:
             attraction(balls, dt)
 
     for event in pygame.event.get():
