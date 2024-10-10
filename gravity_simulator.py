@@ -35,6 +35,7 @@ class Ball:
 
     def move(self, dt):
         self.pos[0] += self.velocity[0] * dt  # Update position based on velocity
+        self.pos[1] += self.velocity[1] * dt  # Update position based on velocity
         self.update_left_right()
 
     def draw(self, surface):
@@ -72,8 +73,8 @@ class Ball:
         delta_vx = (resultant[0] / self.mass) * dt
         delta_vy = (resultant[1] / self.mass) * dt
 
-        self.velocity[1] += delta_vy  # Update velocity
-        self.pos[1] += self.velocity[1] * dt  # Update position based on velocity
+        self.velocity[1] += delta_vy
+        self.pos[1] += self.velocity[1] * dt
 
         self.velocity[0] += delta_vx
         self.pos[0] += self.velocity[0] * dt
@@ -81,7 +82,7 @@ class Ball:
     def wall_collision_check(self, dt):
         # Check if ball has hit the ground
         if self.pos[1] > height - self.radius:
-            self.pos[1] = height - self.radius  # Reset position to ground level
+            self.pos[1] = height - self.radius
             self.velocity[1] = -self.velocity[1] * self.restitution
 
         # Check if ball has hit the sides and rebound
@@ -97,12 +98,12 @@ class Ball:
             self.velocity[1] = -self.velocity[1]
 
 
-num_of_balls = 20
+num_of_balls = 30
 balls = []
 
 for ball in range(num_of_balls):
     color = random.randint(20, 255), 0, random.randint(20, 255)
-    radius = 10
+    radius = 5
     pos = random.randint(0, width - radius), random.randint(0, height - radius)
     balls.append(Ball(color, pos, radius))
 
