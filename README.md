@@ -7,8 +7,6 @@ F to make the particles fall to the floor<br/>T to make the particles gravitate 
 
 There is also 2D collision dynamics incorporated, particles will glow when a collision check is being computed.
 
-I plan to add options to adjust particle properties and toggle more types of particle behaviour once I have optimised the algorithms.
-
 ![Animation-new](https://github.com/user-attachments/assets/43526c54-5261-409c-82ad-e070b0ab4643)
 
 Here we can see the 2D collisions taking place, particles will move in random directions and will glow yellow when a collision check is being processed. To optimise performance, we using sorting algorithms and the transitive property of inequality to avoid collision detection with unnecessary particles.
