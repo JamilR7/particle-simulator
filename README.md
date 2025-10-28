@@ -1,4 +1,4 @@
-# Gravity Simulator
+# Particle Simulator
 --------------------------
 
 There are different modes that determine how the particles move which can be activated via keystrokes. Currently, there are two modes that can be combined, a mode for particles to fall to the ground and a mode for particles to be attracted towards each other to form cell-like structures.
